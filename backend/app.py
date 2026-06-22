@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from processing.single_processor import process_single_image
 from processing.blend_processor import process_blend_image
+from processing.study_case_processor import process_study_case
 
 app = Flask(__name__)
 # Enable CORS for the React frontend (running on default Vite port 5173)
@@ -76,6 +77,29 @@ def blend_process():
             'data': result
         }), 200
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/process/studycase', methods=['POST'])
+def studycase_process():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file provided'}), 400
+        
+    file = request.files['image']
+    case_id = request.form.get('case_id')
+    
+    if not case_id:
+        return jsonify({'error': 'case_id is required'}), 400
+        
+    try:
+        image_bytes = file.read()
+        result = process_study_case(image_bytes, case_id)
+        return jsonify({
+            'status': 'success',
+            'data': result
+        }), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
