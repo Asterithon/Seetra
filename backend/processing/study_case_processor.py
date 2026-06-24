@@ -15,6 +15,8 @@ def process_yellow_teeth(img):
     
     # 1. Original
     snapshots.append({
+        'op_key': 'original_image',
+        'params': {},
         'title': '1. Original Image',
         'image': image_to_base64(img)
     })
@@ -23,6 +25,8 @@ def process_yellow_teeth(img):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray_bgr = cv2.cvtColor(gray_img, cv2.COLOR_GRAY2BGR)
     snapshots.append({
+        'op_key': 'grayscale_bg',
+        'params': {},
         'title': '2. Grayscale Background',
         'image': image_to_base64(gray_bgr)
     })
@@ -38,6 +42,8 @@ def process_yellow_teeth(img):
     # Color masked region
     yellow_highlight = cv2.bitwise_and(img, img, mask=mask)
     snapshots.append({
+        'op_key': 'hsv_mask',
+        'params': {},
         'title': '3. Yellow HSV Masking',
         'image': image_to_base64(yellow_highlight)
     })
@@ -51,15 +57,17 @@ def process_yellow_teeth(img):
     # Combine
     final_result = cv2.add(yellow_highlight, gray_background)
     snapshots.append({
+        'op_key': 'blend_final',
+        'params': {},
         'title': '4. Final Blended Output',
         'image': image_to_base64(final_result)
     })
     
     formulas = [
-        "1. Konversi ruang warna BGR ke HSV",
-        "2. Deteksi piksel: 15 <= Hue <= 40, Sat/Val >= 50 (Mask_Kuning)",
-        "3. Latar_Belakang = Grayscale(Citra_Asli)",
-        "4. P'(x,y) = Citra_Asli(x,y) jika Mask_Kuning==1, else Latar_Belakang(x,y)"
+        "formula.study_1",
+        "formula.study_2",
+        "formula.study_3",
+        "formula.study_4"
     ]
 
     total_pixels = img.shape[0] * img.shape[1]

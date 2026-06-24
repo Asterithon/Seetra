@@ -4,6 +4,7 @@ import PipelineSnapshots from '../components/PipelineSnapshots';
 import MathMatrixDisplay from '../components/MathMatrixDisplay';
 import { SingleHistogram, RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 import { useLightbox } from '../../../context/LightboxContext';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const DEFAULT_STATE = {
   geometri: {
@@ -34,6 +35,7 @@ const DEFAULT_STATE = {
 export default function SingleImageProcess() {
   const { openLightbox } = useLightbox();
   const [params, setParams] = useState(DEFAULT_STATE);
+  const { t } = useLanguage();
   
   const [inputFile, setInputFile] = useState(null);
   const [inputUrl, setInputUrl] = useState(null);
@@ -74,7 +76,7 @@ export default function SingleImageProcess() {
     const img = new Image();
     img.onload = () => {
       if (img.width > 3840 || img.height > 2160) {
-        alert("Peringatan: Resolusi gambar melebihi 4K (3840x2160). Untuk menjaga performa, silakan unggah gambar dengan resolusi lebih rendah.");
+        alert(t('img.resolution_warn'));
         URL.revokeObjectURL(url);
         return;
       }
@@ -119,10 +121,10 @@ export default function SingleImageProcess() {
             histogram: data.data.histogram
           });
         } else {
-          setErrorMsg(data.error || 'Terjadi kesalahan saat memproses gambar');
+          setErrorMsg(data.error || t('img.error_processing'));
         }
       } catch (err) {
-        setErrorMsg('Gagal terhubung ke server OpenCV');
+        setErrorMsg(t('img.error_connection'));
       } finally {
         setIsProcessing(false);
       }
@@ -133,7 +135,7 @@ export default function SingleImageProcess() {
     }, 2000);
 
     return () => clearTimeout(timeoutId);
-  }, [inputFile, params]);
+  }, [inputFile, params, t]);
 
   return (
     <div className="animate-fade-in">
@@ -143,7 +145,7 @@ export default function SingleImageProcess() {
           onClick={handleResetAll}
           className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-medium transition-colors border border-red-500/20"
         >
-          Reset Seluruh Operasi
+          {t('ops.reset_all')}
         </button>
       </div>
       
@@ -174,12 +176,12 @@ export default function SingleImageProcess() {
                 className="hidden" 
               />
               <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-                <span className="text-sm font-medium text-slate-300">Gambar Awal</span>
+                <span className="text-sm font-medium text-slate-300">{t('img.original')}</span>
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="text-xs bg-dark-bg border border-dark-border px-2 py-1 rounded hover:text-primary transition-colors"
                 >
-                  Unggah Baru
+                  {t('img.upload_new')}
                 </button>
               </div>
               
@@ -196,7 +198,7 @@ export default function SingleImageProcess() {
                       <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name}</p>
                       <p className="text-slate-300 text-sm mt-1">{inputInfo?.width}x{inputInfo?.height} px</p>
                       <p className="text-slate-400 text-xs mt-1">{inputInfo?.size}</p>
-                      <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
+                      <p className="text-primary text-[10px] mt-2">{t('img.click_zoom')}</p>
                     </div>
                   </div>
                   {/* Histograms: RGB & HSV Side by side */}
@@ -213,7 +215,7 @@ export default function SingleImageProcess() {
                   <svg className="h-16 w-16 text-slate-500 mb-4 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-slate-400 font-medium text-center">Klik untuk unggah gambar<br/><span className="text-xs font-normal">Format: JPG, PNG, WEBP</span></p>
+                  <p className="text-slate-400 font-medium text-center">{t('img.upload_hint')}<br/><span className="text-xs font-normal">{t('img.upload_format')}</span></p>
                 </div>
               )}
             </div>
@@ -221,8 +223,8 @@ export default function SingleImageProcess() {
             {/* Output Block */}
             <div className="flex flex-col bg-dark-bg/60 border border-dark-border rounded-xl overflow-hidden shadow-lg h-full relative group">
               <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-                <span className="text-sm font-medium text-primary">Hasil Akhir</span>
-                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">Memproses...</span>}
+                <span className="text-sm font-medium text-primary">{t('img.result')}</span>
+                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">{t('img.processing')}</span>}
               </div>
               
               <div className="flex-1 flex flex-col w-full h-full p-2 bg-black/40 relative">
@@ -246,7 +248,7 @@ export default function SingleImageProcess() {
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name} (Edited)</p>
                           <p className="text-primary text-sm mt-1">Processed</p>
-                          <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
+                          <p className="text-primary text-[10px] mt-2">{t('img.click_zoom')}</p>
                         </div>
                       )}
                     </div>
@@ -263,7 +265,7 @@ export default function SingleImageProcess() {
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center">
                     <div className="w-16 h-16 border-4 border-dark-surface border-t-primary rounded-full animate-spin mb-4 opacity-20"></div>
-                    <p className="text-slate-500 text-sm text-center">Hasil eksekusi antrian pipeline<br/>akan tampil di sini</p>
+                    <p className="text-slate-500 text-sm text-center">{t('img.waiting')}</p>
                   </div>
                 )}
               </div>
@@ -273,7 +275,7 @@ export default function SingleImageProcess() {
           <div className="bg-dark-bg/60 p-5 rounded-xl border border-dark-border">
             <h3 className="font-semibold text-secondary mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-              Pipeline Snapshot
+              {t('pipeline.title')}
             </h3>
             <PipelineSnapshots snapshots={resultData.snapshots} />
           </div>
@@ -281,7 +283,7 @@ export default function SingleImageProcess() {
           <div className="bg-dark-bg/60 p-5 rounded-xl border border-dark-border">
             <h3 className="font-semibold text-tertiary mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-              Proses Matematika (Pusat Gambar 9x9)
+              {t('math.title')}
             </h3>
             <MathMatrixDisplay mathData={resultData.math_data} />
           </div>

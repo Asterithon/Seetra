@@ -1,8 +1,10 @@
 import React from 'react';
 import Toggle from '../../../components/ui/Toggle';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export default function BlendOperationsSidebar({ params, updateParam }) {
   const isLogika = params.op_type === 'logika';
+  const { t } = useLanguage();
 
   const handleOpTypeChange = (type) => {
     updateParam('op_type', type);
@@ -16,17 +18,17 @@ export default function BlendOperationsSidebar({ params, updateParam }) {
   return (
     <div className="lg:col-span-1 space-y-4 pr-2 h-full">
       <div className="bg-dark-bg/60 p-4 rounded-xl border border-dark-border">
-        <h3 className="font-semibold text-white mb-4 border-b border-dark-border pb-2">Global Settings</h3>
+        <h3 className="font-semibold text-white mb-4 border-b border-dark-border pb-2">{t('ops.global_settings')}</h3>
         <div className="relative group/toggle">
           <Toggle 
-            label="Grayscale Mode" 
+            label={t('ops.grayscale_mode')} 
             checked={isLogika ? true : params.grayscale} 
             disabled={isLogika}
             onChange={(val) => !isLogika && updateParam('grayscale', val)} 
           />
           {isLogika && (
             <p className="text-[10px] text-yellow-500/80 mt-2 font-medium">
-              * Operasi logika mewajibkan gambar dikonversi menjadi hitam putih (Grayscale).
+              {t('blend.logic_grayscale_warn')}
             </p>
           )}
         </div>
@@ -34,7 +36,7 @@ export default function BlendOperationsSidebar({ params, updateParam }) {
 
       <div className="bg-dark-bg/60 p-4 rounded-xl border border-dark-border space-y-6">
         <div>
-          <h3 className="font-semibold text-white mb-3 border-b border-dark-border pb-2">Tipe Operasi</h3>
+          <h3 className="font-semibold text-white mb-3 border-b border-dark-border pb-2">{t('blend.op_type')}</h3>
           <div className="flex gap-4 mb-4">
             <label className="flex items-center space-x-2 cursor-pointer group">
               <input 
@@ -45,7 +47,7 @@ export default function BlendOperationsSidebar({ params, updateParam }) {
                 onChange={() => handleOpTypeChange('aritmatika')}
                 className="form-radio text-primary bg-dark-surface border-dark-border focus:ring-primary focus:ring-offset-dark-bg" 
               />
-              <span className={`text-sm font-medium transition-colors ${!isLogika ? 'text-primary' : 'text-slate-400 group-hover:text-slate-300'}`}>Aritmatika</span>
+              <span className={`text-sm font-medium transition-colors ${!isLogika ? 'text-primary' : 'text-slate-400 group-hover:text-slate-300'}`}>{t('blend.op_type.arith')}</span>
             </label>
             <label className="flex items-center space-x-2 cursor-pointer group">
               <input 
@@ -56,20 +58,20 @@ export default function BlendOperationsSidebar({ params, updateParam }) {
                 onChange={() => handleOpTypeChange('logika')}
                 className="form-radio text-secondary bg-dark-surface border-dark-border focus:ring-secondary focus:ring-offset-dark-bg" 
               />
-              <span className={`text-sm font-medium transition-colors ${isLogika ? 'text-secondary' : 'text-slate-400 group-hover:text-slate-300'}`}>Logika</span>
+              <span className={`text-sm font-medium transition-colors ${isLogika ? 'text-secondary' : 'text-slate-400 group-hover:text-slate-300'}`}>{t('blend.op_type.logic')}</span>
             </label>
           </div>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3 border-b border-dark-border pb-2">Pilih Operasi</h3>
+          <h3 className="font-semibold text-white mb-3 border-b border-dark-border pb-2">{t('blend.select_op')}</h3>
           {!isLogika ? (
             <div className="flex flex-col gap-3">
               {[
-                { val: 'add', label: 'Tambah (+)' },
-                { val: 'subtract', label: 'Kurang (-)' },
-                { val: 'multiply', label: 'Kali (x)' },
-                { val: 'divide', label: 'Bagi (/)' },
+                { val: 'add', label: t('blend.op.add') },
+                { val: 'subtract', label: t('blend.op.subtract') },
+                { val: 'multiply', label: t('blend.op.multiply') },
+                { val: 'divide', label: t('blend.op.divide') },
               ].map(op => (
                 <label key={op.val} className="flex items-center space-x-3 cursor-pointer group">
                   <input 
@@ -87,9 +89,9 @@ export default function BlendOperationsSidebar({ params, updateParam }) {
           ) : (
             <div className="flex flex-col gap-3 animate-fade-in">
               {[
-                { val: 'and', label: 'AND (&)' },
-                { val: 'or', label: 'OR (|)' },
-                { val: 'xor', label: 'XOR (^)' },
+                { val: 'and', label: t('blend.op.and') },
+                { val: 'or', label: t('blend.op.or') },
+                { val: 'xor', label: t('blend.op.xor') },
               ].map(op => (
                 <label key={op.val} className="flex items-center space-x-3 cursor-pointer group">
                   <input 

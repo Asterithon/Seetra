@@ -111,6 +111,8 @@ def process_single_image(image_bytes, params):
     current_img = img.copy()
 
     snapshots.append({
+        'op_key': 'original_image',
+        'params': {},
         'title': '1. Original Image',
         'image': image_to_base64(current_img)
     })
@@ -123,6 +125,8 @@ def process_single_image(image_bytes, params):
             current_img = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY)
             current_img = cv2.cvtColor(current_img, cv2.COLOR_GRAY2BGR)
         snapshots.append({
+            'op_key': 'grayscale',
+            'params': {},
             'title': f'{step_counter}. Grayscale',
             'image': image_to_base64(current_img)
         })
@@ -137,7 +141,12 @@ def process_single_image(image_bytes, params):
         new_w, new_h = int(w * scale), int(h * scale)
         current_img = cv2.resize(current_img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
         h, w = current_img.shape[:2]
-        snapshots.append({'title': f'{step_counter}. Scaling ({scale}x)', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'scale',
+            'params': {'scale': scale},
+            'title': f'{step_counter}. Scaling ({scale}x)',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(x/{scale}, y/{scale})")
         
@@ -145,7 +154,12 @@ def process_single_image(image_bytes, params):
     if tx != 0:
         M = np.float32([[1, 0, tx], [0, 1, 0]])
         current_img = cv2.warpAffine(current_img, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0))
-        snapshots.append({'title': f'{step_counter}. Translasi X ({tx}px)', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'translate_x',
+            'params': {'tx': tx},
+            'title': f'{step_counter}. Translasi X ({tx}px)',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(x - {tx}, y)")
         
@@ -153,7 +167,12 @@ def process_single_image(image_bytes, params):
     if ty != 0:
         M = np.float32([[1, 0, 0], [0, 1, ty]])
         current_img = cv2.warpAffine(current_img, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0))
-        snapshots.append({'title': f'{step_counter}. Translasi Y ({ty}px)', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'translate_y',
+            'params': {'ty': ty},
+            'title': f'{step_counter}. Translasi Y ({ty}px)',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(x, y - {ty})")
         
@@ -162,19 +181,34 @@ def process_single_image(image_bytes, params):
         center = (w // 2, h // 2)
         M = cv2.getRotationMatrix2D(center, angle, 1.0)
         current_img = cv2.warpAffine(current_img, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0))
-        snapshots.append({'title': f'{step_counter}. Rotasi ({angle}°)', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'rotate',
+            'params': {'angle': angle},
+            'title': f'{step_counter}. Rotasi ({angle}°)',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(x*cos({angle}) - y*sin({angle}), x*sin({angle}) + y*cos({angle}))")
         
     flip_mode = geom.get('flip', 'none')
     if flip_mode == 'horizontal':
         current_img = cv2.flip(current_img, 1)
-        snapshots.append({'title': f'{step_counter}. Flip Horizontal', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'flip_h',
+            'params': {},
+            'title': f'{step_counter}. Flip Horizontal',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(width - 1 - x, y)")
     elif flip_mode == 'vertical':
         current_img = cv2.flip(current_img, 0)
-        snapshots.append({'title': f'{step_counter}. Flip Vertikal', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'flip_v',
+            'params': {},
+            'title': f'{step_counter}. Flip Vertikal',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = P(x, height - 1 - y)")
 
@@ -184,28 +218,48 @@ def process_single_image(image_bytes, params):
     brightness = int(titik.get('brightness', 0))
     if brightness != 0:
         current_img = cv2.convertScaleAbs(current_img, alpha=1.0, beta=brightness)
-        snapshots.append({'title': f'{step_counter}. Brightness ({brightness})', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'brightness',
+            'params': {'brightness': brightness},
+            'title': f'{step_counter}. Brightness ({brightness})',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = clip(P(x,y) + {brightness}, 0, 255)")
         
     contrast = float(titik.get('contrast', 1.0))
     if contrast != 1.0:
         current_img = cv2.convertScaleAbs(current_img, alpha=contrast, beta=0)
-        snapshots.append({'title': f'{step_counter}. Contrast ({contrast}x)', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'contrast',
+            'params': {'contrast': contrast},
+            'title': f'{step_counter}. Contrast ({contrast}x)',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = clip(P(x,y) * {contrast}, 0, 255)")
         
     threshold = int(titik.get('threshold', 128))
     if threshold != 128:
         _, current_img = cv2.threshold(current_img, threshold, 255, cv2.THRESH_BINARY)
-        snapshots.append({'title': f'{step_counter}. Threshold ({threshold})', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'threshold',
+            'params': {'threshold': threshold},
+            'title': f'{step_counter}. Threshold ({threshold})',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = 255 if P(x,y) > {threshold} else 0")
         
     negasi = titik.get('negasi', False)
     if negasi:
         current_img = cv2.bitwise_not(current_img)
-        snapshots.append({'title': f'{step_counter}. Negasi', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'negation',
+            'params': {},
+            'title': f'{step_counter}. Negasi',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = 255 - P(x,y)")
 
@@ -215,7 +269,12 @@ def process_single_image(image_bytes, params):
     mean_size = int(spasial.get('meanSize', 3))
     if mean_size > 3:
         current_img = cv2.blur(current_img, (mean_size, mean_size))
-        snapshots.append({'title': f'{step_counter}. Mean Filter ({mean_size}x{mean_size})', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'mean_filter',
+            'params': {'mean_size': mean_size},
+            'title': f'{step_counter}. Mean Filter ({mean_size}x{mean_size})',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = (1/{mean_size*mean_size}) * sum(neighbors)")
         
@@ -223,7 +282,12 @@ def process_single_image(image_bytes, params):
     if median_size > 3:
         if median_size % 2 == 0: median_size += 1
         current_img = cv2.medianBlur(current_img, median_size)
-        snapshots.append({'title': f'{step_counter}. Median Filter ({median_size}x{median_size})', 'image': image_to_base64(current_img)})
+        snapshots.append({
+            'op_key': 'median_filter',
+            'params': {'median_size': median_size},
+            'title': f'{step_counter}. Median Filter ({median_size}x{median_size})',
+            'image': image_to_base64(current_img)
+        })
         step_counter += 1
         formulas.append(f"P'(x,y) = median(neighbors in {median_size}x{median_size})")
         
@@ -236,7 +300,12 @@ def process_single_image(image_bytes, params):
             sobely = cv2.Sobel(gray_for_edge, cv2.CV_64F, 0, 1, ksize=3)
             edge_img = cv2.magnitude(sobelx, sobely)
             current_img = cv2.convertScaleAbs(edge_img)
-            snapshots.append({'title': f'{step_counter}. Edge Sobel', 'image': image_to_base64(current_img)})
+            snapshots.append({
+                'op_key': 'edge_sobel',
+                'params': {},
+                'title': f'{step_counter}. Edge Sobel',
+                'image': image_to_base64(current_img)
+            })
             formulas.append("P'(x,y) = sqrt(Gx^2 + Gy^2) where Gx, Gy are Sobel gradients")
         elif edge_type == 'prewitt':
             kernelx = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]], dtype=int)
@@ -245,13 +314,23 @@ def process_single_image(image_bytes, params):
             y = cv2.filter2D(gray_for_edge, cv2.CV_16S, kernely)
             edge_img = cv2.convertScaleAbs(cv2.addWeighted(cv2.convertScaleAbs(x), 0.5, cv2.convertScaleAbs(y), 0.5, 0))
             current_img = edge_img
-            snapshots.append({'title': f'{step_counter}. Edge Prewitt', 'image': image_to_base64(current_img)})
+            snapshots.append({
+                'op_key': 'edge_prewitt',
+                'params': {},
+                'title': f'{step_counter}. Edge Prewitt',
+                'image': image_to_base64(current_img)
+            })
             formulas.append("P'(x,y) = Prewitt kernel convolution")
         elif edge_type == 'canny':
             low = int(spasial.get('cannyLow', 50))
             high = int(spasial.get('cannyHigh', 150))
             current_img = cv2.Canny(gray_for_edge, low, high)
-            snapshots.append({'title': f'{step_counter}. Edge Canny ({low},{high})', 'image': image_to_base64(current_img)})
+            snapshots.append({
+                'op_key': 'edge_canny',
+                'params': {'low': low, 'high': high},
+                'title': f'{step_counter}. Edge Canny ({low},{high})',
+                'image': image_to_base64(current_img)
+            })
             formulas.append(f"P'(x,y) = Canny(low={low}, high={high})")
             
         if len(current_img.shape) == 2:
@@ -264,7 +343,7 @@ def process_single_image(image_bytes, params):
     hsv_hist_after = get_hsv_histogram_image(current_img)
 
     if not formulas:
-        formulas.append("Tidak ada operasi yang diaplikasikan (P' = P).")
+        formulas.append("formula.none")
 
     return {
         'processed_image': image_to_base64(current_img),

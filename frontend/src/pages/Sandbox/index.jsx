@@ -4,15 +4,17 @@ import BlendImageProcess from './tabs/BlendImageProcess';
 import StudyCaseProcess from './tabs/StudyCaseProcess';
 import { LightboxProvider } from '../../context/LightboxContext';
 import ImageLightbox from '../../components/ui/ImageLightbox';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TABS = [
-  { id: 'single', label: 'Single Image Process' },
-  { id: 'blend', label: 'Blend Image Process' },
-  { id: 'studycase', label: 'Study Case Process' },
+  { id: 'single', key: 'tab.single' },
+  { id: 'blend', key: 'tab.blend' },
+  { id: 'studycase', key: 'tab.studycase' },
 ];
 
 export default function Sandbox() {
   const [activeTab, setActiveTab] = useState('single');
+  const { t } = useLanguage();
 
   // Test backend connection on mount
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function Sandbox() {
             >
               {TABS.map((tab) => (
                 <option key={tab.id} value={tab.id}>
-                  {tab.label}
+                  {t(tab.key)}
                 </option>
               ))}
             </select>
@@ -61,7 +63,7 @@ export default function Sandbox() {
                     : 'text-slate-400 hover:text-slate-200 hover:bg-dark-border/50'
                 }`}
               >
-                {tab.label}
+                {t(tab.key)}
               </button>
             ))}
           </div>

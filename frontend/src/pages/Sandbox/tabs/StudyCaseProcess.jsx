@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import StudyCaseSidebar from './StudyCaseSidebar';
+import PipelineSnapshots from '../components/PipelineSnapshots';
 import MathMatrixDisplay from '../components/MathMatrixDisplay';
 import { RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 import { useLightbox } from '../../../context/LightboxContext';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export default function StudyCaseProcess() {
   const { openLightbox } = useLightbox();
   const [caseId, setCaseId] = useState('yellow_teeth');
+  const { t } = useLanguage();
   
   const [inputFile, setInputFile] = useState(null);
   const [inputUrl, setInputUrl] = useState(null);
@@ -35,7 +38,7 @@ export default function StudyCaseProcess() {
     const img = new Image();
     img.onload = () => {
       if (img.width > 3840 || img.height > 2160) {
-        alert("Peringatan: Resolusi gambar melebihi 4K (3840x2160).");
+        alert(t('img.resolution_warn'));
         URL.revokeObjectURL(url);
         return;
       }
@@ -80,10 +83,10 @@ export default function StudyCaseProcess() {
             yellow_percentage: data.data.yellow_percentage
           });
         } else {
-          setErrorMsg(data.error || 'Terjadi kesalahan saat memproses gambar');
+          setErrorMsg(data.error || t('img.error_processing'));
         }
       } catch (err) {
-        setErrorMsg('Gagal terhubung ke server OpenCV');
+        setErrorMsg(t('img.error_connection'));
       } finally {
         setIsProcessing(false);
       }
@@ -95,12 +98,12 @@ export default function StudyCaseProcess() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [inputFile, caseId]);
+  }, [inputFile, caseId, t]);
 
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-primary">Study Case Process</h2>
+        <h2 className="text-xl font-semibold text-primary">{t('study.title')}</h2>
       </div>
       
       {errorMsg && (
@@ -130,12 +133,12 @@ export default function StudyCaseProcess() {
                 className="hidden" 
               />
               <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-                <span className="text-sm font-medium text-slate-300">Gambar Awal</span>
+                <span className="text-sm font-medium text-slate-300">{t('img.original')}</span>
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="text-xs bg-dark-bg border border-dark-border px-2 py-1 rounded hover:text-primary transition-colors"
                 >
-                  Unggah Baru
+                  {t('img.upload_new')}
                 </button>
               </div>
               
@@ -152,7 +155,7 @@ export default function StudyCaseProcess() {
                       <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name}</p>
                       <p className="text-slate-300 text-sm mt-1">{inputInfo?.width}x{inputInfo?.height} px</p>
                       <p className="text-slate-400 text-xs mt-1">{inputInfo?.size}</p>
-                      <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
+                      <p className="text-primary text-[10px] mt-2">{t('img.click_zoom')}</p>
                     </div>
                   </div>
                   {/* Histograms for Input */}
@@ -169,7 +172,7 @@ export default function StudyCaseProcess() {
                   <svg className="h-16 w-16 text-slate-500 mb-4 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-slate-400 font-medium text-center">Unggah Gambar<br/><span className="text-xs font-normal">Format: JPG, PNG, WEBP</span></p>
+                  <p className="text-slate-400 font-medium text-center">{t('img.upload_hint')}<br/><span className="text-xs font-normal">{t('img.upload_format')}</span></p>
                 </div>
               )}
             </div>
@@ -177,8 +180,8 @@ export default function StudyCaseProcess() {
             {/* Output Block */}
             <div className="flex flex-col bg-dark-bg/60 border border-dark-border rounded-xl overflow-hidden shadow-lg h-full relative group">
               <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-                <span className="text-sm font-medium text-primary">Hasil Akhir</span>
-                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">Memproses...</span>}
+                <span className="text-sm font-medium text-primary">{t('img.result')}</span>
+                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">{t('img.processing')}</span>}
               </div>
               
               <div className="flex-1 flex flex-col w-full h-full p-2 bg-black/40 relative">
@@ -188,7 +191,7 @@ export default function StudyCaseProcess() {
                       <img
                         src={resultData.image}
                         alt="Result"
-                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: `Hasil: ${caseId.replace(/_/g, ' ')}`, subtitle: 'Study Case Output' })}
+                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: `${t('img.result')}: ${getCaseLabel(caseId)}`, subtitle: 'Study Case Output' })}
                         className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30 cursor-wait' : 'opacity-100 cursor-zoom-in'}`}
                       />
                       
@@ -206,7 +209,7 @@ export default function StudyCaseProcess() {
                   </>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center">
-                    <p className="text-slate-500 text-sm text-center">Menunggu input gambar</p>
+                    <p className="text-slate-500 text-sm text-center">{t('study.waiting')}</p>
                   </div>
                 )}
               </div>
@@ -222,37 +225,16 @@ export default function StudyCaseProcess() {
         <div className="bg-dark-bg/60 p-5 rounded-xl border border-dark-border">
           <h3 className="font-semibold text-white mb-4 flex items-center">
             <svg className="w-5 h-5 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            Pipeline Snapshot
+            {t('pipeline.title')}
           </h3>
-          <div className="flex overflow-x-auto gap-4 pb-2 snap-x">
-            {resultData.snapshots && resultData.snapshots.length > 0 ? (
-              resultData.snapshots.map((snap, idx) => (
-                <div key={idx} className="flex-shrink-0 w-32 snap-center group">
-                  <div
-                    className="h-32 bg-black/40 rounded-lg border border-dark-border overflow-hidden mb-2 relative cursor-zoom-in"
-                    onClick={() => openLightbox({ src: snap.image, title: snap.title, subtitle: `Pipeline Step ${idx + 1}` })}
-                  >
-                    <img src={snap.image} alt={snap.title} className="w-full h-full object-contain" />
-                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                  </div>
-                  <p className="text-[10px] text-slate-300 font-medium text-center break-words leading-tight">
-                    {snap.title}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="w-full h-32 flex items-center justify-center text-slate-500 text-xs border border-dashed border-dark-border rounded-lg">
-                Snapshots akan muncul di sini
-              </div>
-            )}
-          </div>
+          <PipelineSnapshots snapshots={resultData.snapshots} />
         </div>
 
         {/* Math Matrix */}
         <div className="bg-dark-bg/60 p-5 rounded-xl border border-dark-border">
           <h3 className="font-semibold text-tertiary mb-3 flex items-center">
             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-            Proses Matematika (Pusat Gambar 9x9)
+            {t('math.title')}
           </h3>
           <MathMatrixDisplay mathData={resultData.math_data} />
         </div>

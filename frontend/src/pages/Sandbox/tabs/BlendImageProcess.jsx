@@ -3,6 +3,7 @@ import BlendOperationsSidebar from './BlendOperationsSidebar';
 import BlendMathMatrixDisplay from '../components/BlendMathMatrixDisplay';
 import { SingleHistogram, RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 import { useLightbox } from '../../../context/LightboxContext';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const DEFAULT_STATE = {
   op_type: 'aritmatika',
@@ -13,6 +14,7 @@ const DEFAULT_STATE = {
 export default function BlendImageProcess() {
   const { openLightbox } = useLightbox();
   const [params, setParams] = useState(DEFAULT_STATE);
+  const { t } = useLanguage();
   
   const [inputFile1, setInputFile1] = useState(null);
   const [inputUrl1, setInputUrl1] = useState(null);
@@ -52,7 +54,7 @@ export default function BlendImageProcess() {
     const img = new Image();
     img.onload = () => {
       if (img.width > 3840 || img.height > 2160) {
-        alert("Peringatan: Resolusi gambar melebihi 4K (3840x2160).");
+        alert(t('img.resolution_warn'));
         URL.revokeObjectURL(url);
         return;
       }
@@ -107,10 +109,10 @@ export default function BlendImageProcess() {
             histogram: data.data.histogram
           });
         } else {
-          setErrorMsg(data.error || 'Terjadi kesalahan saat memproses gambar');
+          setErrorMsg(data.error || t('img.error_processing'));
         }
       } catch (err) {
-        setErrorMsg('Gagal terhubung ke server OpenCV');
+        setErrorMsg(t('img.error_connection'));
       } finally {
         setIsProcessing(false);
       }
@@ -121,7 +123,7 @@ export default function BlendImageProcess() {
     }, 2000);
 
     return () => clearTimeout(timeoutId);
-  }, [inputFile1, inputFile2, params]);
+  }, [inputFile1, inputFile2, params, t]);
 
   const renderInputBlock = (num, inputUrl, inputInfo, fileInputRef, previewResized) => (
     <div className="flex flex-col bg-dark-bg/60 border border-dark-border rounded-xl overflow-hidden shadow-lg h-full relative group">
@@ -133,12 +135,12 @@ export default function BlendImageProcess() {
         className="hidden" 
       />
       <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-        <span className="text-sm font-medium text-slate-300">Gambar {num}</span>
+        <span className="text-sm font-medium text-slate-300">{t(`blend.img${num}`)}</span>
         <button 
           onClick={() => fileInputRef.current?.click()}
           className="text-xs bg-dark-bg border border-dark-border px-2 py-1 rounded hover:text-primary transition-colors"
         >
-          Unggah Baru
+          {t('img.upload_new')}
         </button>
       </div>
       
@@ -148,7 +150,7 @@ export default function BlendImageProcess() {
             <img
               src={previewResized || inputUrl}
               alt={`Input ${num}`}
-              onClick={() => openLightbox({ src: previewResized || inputUrl, title: `Gambar ${num}: ${inputInfo?.name}`, subtitle: `${inputInfo?.width}x${inputInfo?.height} px · ${inputInfo?.size}${previewResized ? ' · Auto-Resized' : ''}` })}
+              onClick={() => openLightbox({ src: previewResized || inputUrl, title: `${t(`blend.img${num}`)}: ${inputInfo?.name}`, subtitle: `${inputInfo?.width}x${inputInfo?.height} px · ${inputInfo?.size}${previewResized ? ` · ${t('img.auto_resized')}` : ''}` })}
               className="w-full h-full object-contain cursor-zoom-in"
             />
             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -157,10 +159,10 @@ export default function BlendImageProcess() {
               <p className="text-slate-400 text-xs mt-1">{inputInfo?.size}</p>
               {previewResized && (
                 <span className="mt-2 px-2 py-1 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 text-[10px] rounded">
-                  Auto-Resized (Cover)
+                  {t('img.auto_resized')}
                 </span>
               )}
-              <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
+              <p className="text-primary text-[10px] mt-2">{t('img.click_zoom')}</p>
             </div>
           </div>
           {/* Histograms */}
@@ -181,7 +183,7 @@ export default function BlendImageProcess() {
           <svg className="h-16 w-16 text-slate-500 mb-4 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-slate-400 font-medium text-center">Unggah Gambar {num}<br/><span className="text-xs font-normal">Format: JPG, PNG, WEBP</span></p>
+          <p className="text-slate-400 font-medium text-center">{t(`blend.upload${num}`)}<br/><span className="text-xs font-normal">{t('img.upload_format')}</span></p>
         </div>
       )}
     </div>
@@ -190,12 +192,12 @@ export default function BlendImageProcess() {
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-primary">Blend Image Process</h2>
+        <h2 className="text-xl font-semibold text-primary">{t('tab.blend')}</h2>
         <button 
           onClick={handleResetAll}
           className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-medium transition-colors border border-red-500/20"
         >
-          Reset Seluruh Operasi
+          {t('ops.reset_all')}
         </button>
       </div>
       
@@ -210,7 +212,7 @@ export default function BlendImageProcess() {
         <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-200/90 text-sm flex items-start">
           <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <p>
-            Dimensi gambar berbeda. Sistem secara otomatis menyesuaikan (menyamakan ukuran) kedua gambar tanpa merusak rasio (seperti CSS object-fit cover). Bagian gambar yang berlebih mungkin terpotong.
+            {t('blend.resize_notice')}
           </p>
         </div>
       )}
@@ -231,8 +233,8 @@ export default function BlendImageProcess() {
             {/* Output Block */}
             <div className="flex flex-col bg-dark-bg/60 border border-dark-border rounded-xl overflow-hidden shadow-lg h-full relative group">
               <div className="p-3 bg-dark-surface/80 border-b border-dark-border flex justify-between items-center z-10">
-                <span className="text-sm font-medium text-primary">Hasil Akhir</span>
-                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">Memproses...</span>}
+                <span className="text-sm font-medium text-primary">{t('img.result')}</span>
+                {isProcessing && <span className="text-xs text-primary/70 animate-pulse">{t('img.processing')}</span>}
               </div>
               
               <div className="flex-1 flex flex-col w-full h-full p-2 bg-black/40 relative">
@@ -242,7 +244,7 @@ export default function BlendImageProcess() {
                       <img
                         src={resultData.image}
                         alt="Result"
-                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: 'Hasil Blend', subtitle: `${params.op_type} · ${params.operation}` })}
+                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: t('blend.math.result'), subtitle: `${params.op_type} · ${params.operation}` })}
                         className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30 cursor-wait' : 'opacity-100 cursor-zoom-in'}`}
                       />
                       
@@ -265,7 +267,7 @@ export default function BlendImageProcess() {
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center">
                     <div className="w-16 h-16 border-4 border-dark-surface border-t-primary rounded-full animate-spin mb-4 opacity-20"></div>
-                    <p className="text-slate-500 text-sm text-center">Membutuhkan dua gambar<br/>untuk memproses blend</p>
+                    <p className="text-slate-500 text-sm text-center whitespace-pre-line">{t('blend.result_waiting')}</p>
                   </div>
                 )}
               </div>
@@ -275,7 +277,7 @@ export default function BlendImageProcess() {
           <div className="bg-dark-bg/60 p-5 rounded-xl border border-dark-border">
             <h3 className="font-semibold text-tertiary mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-              Proses Matematika (Pusat Gambar 9x9)
+              {t('blend.math_title')}
             </h3>
             <BlendMathMatrixDisplay mathData={resultData.math_data} />
           </div>

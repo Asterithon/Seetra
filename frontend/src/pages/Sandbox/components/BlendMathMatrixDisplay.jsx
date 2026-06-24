@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export default function BlendMathMatrixDisplay({ mathData }) {
   const [selectedPixel, setSelectedPixel] = useState(null);
+  const { t } = useLanguage();
 
   if (!mathData) {
     return (
       <div className="bg-dark-surface rounded-lg p-4 font-mono text-xs text-slate-500 overflow-x-auto min-h-[100px]">
-        // Menunggu data matriks...
+        {t('math.waiting')}
       </div>
     );
   }
@@ -14,12 +16,12 @@ export default function BlendMathMatrixDisplay({ mathData }) {
   return (
     <div className="bg-dark-surface rounded-lg p-4 font-mono text-xs text-slate-300 overflow-x-auto min-h-[100px]">
       <div className="flex flex-col gap-6 w-max">
-        <p className="text-slate-500">// Klik salah satu sel piksel untuk melihat perhitungan rumusnya secara mendetail.</p>
+        <p className="text-slate-500">{t('blend.math.hint')}</p>
         
         <div className="flex flex-row gap-6">
           {/* Image 1 */}
           <div>
-            <p className="text-secondary font-semibold mb-2">Gambar 1</p>
+            <p className="text-secondary font-semibold mb-2">{t('blend.math.img1')}</p>
             <div className="grid grid-cols-9 gap-[1px] max-w-fit bg-dark-border p-[1px]">
               {mathData.matrix_1.map((row, r) => 
                 row.map((val, c) => {
@@ -43,10 +45,10 @@ export default function BlendMathMatrixDisplay({ mathData }) {
           <div className="flex flex-col items-center justify-center text-slate-500 font-bold text-lg pt-6">
             ?
           </div>
-
+ 
           {/* Image 2 */}
           <div>
-            <p className="text-secondary font-semibold mb-2">Gambar 2</p>
+            <p className="text-secondary font-semibold mb-2">{t('blend.math.img2')}</p>
             <div className="grid grid-cols-9 gap-[1px] max-w-fit bg-dark-border p-[1px]">
               {mathData.matrix_2.map((row, r) => 
                 row.map((val, c) => {
@@ -66,14 +68,14 @@ export default function BlendMathMatrixDisplay({ mathData }) {
               )}
             </div>
           </div>
-
+ 
           <div className="flex flex-col items-center justify-center text-slate-500 font-bold text-lg pt-6">
             =
           </div>
-
+ 
           {/* Result */}
           <div>
-            <p className="text-primary font-semibold mb-2">Hasil Akhir</p>
+            <p className="text-primary font-semibold mb-2">{t('blend.math.result')}</p>
             <div className="grid grid-cols-9 gap-[1px] max-w-fit bg-dark-border p-[1px]">
               {mathData.matrix_after.map((row, r) => 
                 row.map((val, c) => {
@@ -94,13 +96,13 @@ export default function BlendMathMatrixDisplay({ mathData }) {
             </div>
           </div>
         </div>
-
+ 
         {/* Math Formulas Display Box */}
         {selectedPixel && (
           <div className="p-4 bg-dark-bg border border-tertiary/30 rounded-lg animate-fade-in mt-2 w-full max-w-2xl">
             <div className="flex items-center space-x-4 mb-4 border-b border-dark-border pb-3">
               <div>
-                <span className="text-slate-500">Piksel (x, y):</span> [{selectedPixel.r}, {selectedPixel.c}]
+                <span className="text-slate-500">{t('blend.math.pixel')}</span> [{selectedPixel.r}, {selectedPixel.c}]
               </div>
               <div className="text-lg flex items-center">
                 <span className="text-secondary font-bold">{selectedPixel.val1}</span>
@@ -111,7 +113,7 @@ export default function BlendMathMatrixDisplay({ mathData }) {
               </div>
             </div>
             
-            <p className="text-tertiary font-semibold mb-2">Rumus Operasi Berlaku:</p>
+            <p className="text-tertiary font-semibold mb-2">{t('blend.math.formula')}</p>
             <div className="space-y-1.5 pl-2 border-l-2 border-tertiary/50 whitespace-pre-wrap">
               {mathData.formulas.map((f, idx) => (
                 <p key={idx} className="text-slate-300 text-[11px]"><span className="text-slate-500 mr-2">[{idx+1}]</span> {f}</p>
