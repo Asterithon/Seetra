@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import StudyCaseSidebar from './StudyCaseSidebar';
 import MathMatrixDisplay from '../components/MathMatrixDisplay';
 import { RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
+import { useLightbox } from '../../../context/LightboxContext';
 
 export default function StudyCaseProcess() {
+  const { openLightbox } = useLightbox();
   const [caseId, setCaseId] = useState('yellow_teeth');
   
   const [inputFile, setInputFile] = useState(null);
@@ -140,12 +142,17 @@ export default function StudyCaseProcess() {
               {inputUrl ? (
                 <div className="flex-1 flex flex-col w-full h-full p-2 bg-black/40 relative">
                   <div className="flex-1 min-h-0 relative">
-                    <img src={inputUrl} alt="Input" className="w-full h-full object-contain" />
-                    
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <img
+                      src={inputUrl}
+                      alt="Input"
+                      onClick={() => openLightbox({ src: inputUrl, title: inputInfo?.name, subtitle: `${inputInfo?.width}x${inputInfo?.height} px · ${inputInfo?.size}` })}
+                      className="w-full h-full object-contain cursor-zoom-in"
+                    />
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name}</p>
                       <p className="text-slate-300 text-sm mt-1">{inputInfo?.width}x{inputInfo?.height} px</p>
                       <p className="text-slate-400 text-xs mt-1">{inputInfo?.size}</p>
+                      <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
                     </div>
                   </div>
                   {/* Histograms for Input */}
@@ -178,10 +185,15 @@ export default function StudyCaseProcess() {
                 {resultData.image ? (
                   <>
                     <div className="flex-1 min-h-0 relative">
-                      <img src={resultData.image} alt="Result" className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30' : 'opacity-100'}`} />
+                      <img
+                        src={resultData.image}
+                        alt="Result"
+                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: `Hasil: ${caseId.replace(/_/g, ' ')}`, subtitle: 'Study Case Output' })}
+                        className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30 cursor-wait' : 'opacity-100 cursor-zoom-in'}`}
+                      />
                       
                       {isProcessing && (
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <div className="w-12 h-12 border-4 border-dark-surface border-t-primary rounded-full animate-spin"></div>
                         </div>
                       )}
@@ -216,9 +228,12 @@ export default function StudyCaseProcess() {
             {resultData.snapshots && resultData.snapshots.length > 0 ? (
               resultData.snapshots.map((snap, idx) => (
                 <div key={idx} className="flex-shrink-0 w-32 snap-center group">
-                  <div className="h-32 bg-black/40 rounded-lg border border-dark-border overflow-hidden mb-2 relative">
+                  <div
+                    className="h-32 bg-black/40 rounded-lg border border-dark-border overflow-hidden mb-2 relative cursor-zoom-in"
+                    onClick={() => openLightbox({ src: snap.image, title: snap.title, subtitle: `Pipeline Step ${idx + 1}` })}
+                  >
                     <img src={snap.image} alt={snap.title} className="w-full h-full object-contain" />
-                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                   </div>
                   <p className="text-[10px] text-slate-300 font-medium text-center break-words leading-tight">
                     {snap.title}

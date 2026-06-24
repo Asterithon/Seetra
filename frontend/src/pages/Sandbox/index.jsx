@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import SingleImageProcess from './tabs/SingleImageProcess';
 import BlendImageProcess from './tabs/BlendImageProcess';
 import StudyCaseProcess from './tabs/StudyCaseProcess';
+import { LightboxProvider } from '../../context/LightboxContext';
+import ImageLightbox from '../../components/ui/ImageLightbox';
 
 const TABS = [
   { id: 'single', label: 'Single Image Process' },
@@ -25,7 +27,9 @@ export default function Sandbox() {
   }, []);
 
   return (
-    <div className="flex-grow flex flex-col p-4 md:p-6 lg:p-8 animate-fade-in">
+    <LightboxProvider>
+      <ImageLightbox />
+      <div className="flex-grow flex flex-col p-4 md:p-6 lg:p-8 animate-fade-in">
       <div className="w-full max-w-7xl mx-auto h-full flex flex-col">
         
         {/* Tab Navigation - Responsive */}
@@ -71,5 +75,6 @@ export default function Sandbox() {
         </div>
       </div>
     </div>
+    </LightboxProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import Toggle from '../../../../components/ui/Toggle';
+import Toggle from '../../../components/ui/Toggle';
 
 export default function BlendOperationsSidebar({ params, updateParam }) {
   const isLogika = params.op_type === 'logika';

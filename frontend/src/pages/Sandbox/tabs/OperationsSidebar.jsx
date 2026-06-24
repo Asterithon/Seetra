@@ -1,7 +1,7 @@
 import React from 'react';
-import Slider from '../../../../components/ui/Slider';
-import Toggle from '../../../../components/ui/Toggle';
-import Select from '../../../../components/ui/Select';
+import Slider from '../../../components/ui/Slider';
+import Toggle from '../../../components/ui/Toggle';
+import Select from '../../../components/ui/Select';
 
 export default function OperationsSidebar({ params, updateParam, updateGlobal }) {
   return (

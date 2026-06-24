@@ -3,6 +3,7 @@ import OperationsSidebar from './OperationsSidebar';
 import PipelineSnapshots from '../components/PipelineSnapshots';
 import MathMatrixDisplay from '../components/MathMatrixDisplay';
 import { SingleHistogram, RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
+import { useLightbox } from '../../../context/LightboxContext';
 
 const DEFAULT_STATE = {
   geometri: {
@@ -31,6 +32,7 @@ const DEFAULT_STATE = {
 };
 
 export default function SingleImageProcess() {
+  const { openLightbox } = useLightbox();
   const [params, setParams] = useState(DEFAULT_STATE);
   
   const [inputFile, setInputFile] = useState(null);
@@ -184,12 +186,17 @@ export default function SingleImageProcess() {
               {inputUrl ? (
                 <div className="flex-1 flex flex-col w-full h-full p-2 bg-black/40 relative">
                   <div className="flex-1 min-h-0 relative">
-                    <img src={inputUrl} alt="Input" className="w-full h-full object-contain" />
-                    
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <img
+                      src={inputUrl}
+                      alt="Input"
+                      onClick={() => openLightbox({ src: inputUrl, title: inputInfo?.name, subtitle: `${inputInfo?.width}x${inputInfo?.height} px · ${inputInfo?.size}` })}
+                      className="w-full h-full object-contain cursor-zoom-in"
+                    />
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name}</p>
                       <p className="text-slate-300 text-sm mt-1">{inputInfo?.width}x{inputInfo?.height} px</p>
                       <p className="text-slate-400 text-xs mt-1">{inputInfo?.size}</p>
+                      <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
                     </div>
                   </div>
                   {/* Histograms: RGB & HSV Side by side */}
@@ -222,18 +229,24 @@ export default function SingleImageProcess() {
                 {resultData.image ? (
                   <>
                     <div className="flex-1 min-h-0 relative">
-                      <img src={resultData.image} alt="Result" className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30' : 'opacity-100'}`} />
+                      <img
+                        src={resultData.image}
+                        alt="Result"
+                        onClick={() => !isProcessing && openLightbox({ src: resultData.image, title: `${inputInfo?.name} (Edited)`, subtitle: 'Processed Result' })}
+                        className={`w-full h-full object-contain transition-opacity duration-300 ${isProcessing ? 'opacity-30 cursor-wait' : 'opacity-100 cursor-zoom-in'}`}
+                      />
                       
                       {isProcessing && (
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <div className="w-12 h-12 border-4 border-dark-surface border-t-primary rounded-full animate-spin"></div>
                         </div>
                       )}
 
                       {!isProcessing && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <p className="font-semibold text-white truncate max-w-[80%]">{inputInfo?.name} (Edited)</p>
                           <p className="text-primary text-sm mt-1">Processed</p>
+                          <p className="text-primary text-[10px] mt-2">🔍 Klik untuk perbesar</p>
                         </div>
                       )}
                     </div>
