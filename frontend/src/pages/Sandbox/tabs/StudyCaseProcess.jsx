@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import StudyCaseSidebar from './components/StudyCaseSidebar';
-import MathMatrixDisplay from './components/MathMatrixDisplay';
-import { RgbHistogram, HsvHistogram } from './components/HistogramDisplay';
+import StudyCaseSidebar from './StudyCaseSidebar';
+import MathMatrixDisplay from '../components/MathMatrixDisplay';
+import { RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 
 export default function StudyCaseProcess() {
   const [caseId, setCaseId] = useState('yellow_teeth');

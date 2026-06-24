@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import BlendOperationsSidebar from './components/BlendOperationsSidebar';
-import BlendMathMatrixDisplay from './components/BlendMathMatrixDisplay';
-import { SingleHistogram, RgbHistogram, HsvHistogram } from './components/HistogramDisplay';
+import BlendOperationsSidebar from './BlendOperationsSidebar';
+import BlendMathMatrixDisplay from '../components/BlendMathMatrixDisplay';
+import { SingleHistogram, RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 
 const DEFAULT_STATE = {
   op_type: 'aritmatika',

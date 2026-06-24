@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import OperationsSidebar from './components/OperationsSidebar';
-import PipelineSnapshots from './components/PipelineSnapshots';
-import MathMatrixDisplay from './components/MathMatrixDisplay';
-import { SingleHistogram, RgbHistogram, HsvHistogram } from './components/HistogramDisplay';
+import OperationsSidebar from './OperationsSidebar';
+import PipelineSnapshots from '../components/PipelineSnapshots';
+import MathMatrixDisplay from '../components/MathMatrixDisplay';
+import { SingleHistogram, RgbHistogram, HsvHistogram } from '../components/HistogramDisplay';
 
 const DEFAULT_STATE = {
   geometri: {
