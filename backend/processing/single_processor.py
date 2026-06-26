@@ -93,6 +93,117 @@ def get_hsv_histogram_image(img):
     plt.axis('off')
     return get_plot_base64()
 
+def morphological_thinning(img):
+    binary = (img > 128).astype(np.uint8)
+    
+    # Structuring elements for thinning (Golay alphabet for thinning)
+    kernels = [
+        np.array([[ 0,  0, 0], [-1,  1,-1], [ 1,  1, 1]], dtype=np.int8),
+        np.array([[-1,  0, 0], [ 1,  1, 0], [ 1,  1,-1]], dtype=np.int8),
+        np.array([[ 1, -1, 0], [ 1,  1, 0], [ 1, -1, 0]], dtype=np.int8),
+        np.array([[ 1,  1,-1], [ 1,  1, 0], [-1,  0, 0]], dtype=np.int8),
+        np.array([[ 1,  1, 1], [-1,  1,-1], [ 0,  0, 0]], dtype=np.int8),
+        np.array([[-1,  1, 1], [ 0,  1, 1], [ 0,  0,-1]], dtype=np.int8),
+        np.array([[ 0, -1, 1], [ 0,  1, 1], [ 0, -1, 1]], dtype=np.int8),
+        np.array([[ 0,  0,-1], [ 0,  1, 1], [-1,  1, 1]], dtype=np.int8)
+    ]
+    
+    thinned = binary.copy()
+    for _ in range(30):  # limit iterations for speed
+        last = thinned.copy()
+        for k in kernels:
+            hm = cv2.morphologyEx(thinned, cv2.MORPH_HITMISS, k)
+            thinned = cv2.subtract(thinned, hm)
+        if np.array_equal(thinned, last):
+            break
+            
+    return thinned * 255
+
+def zhang_suen_thinning(img):
+    # Ensure binary image with values 0 and 1
+    binary = (img > 128).astype(np.uint8)
+    
+    # Pad to handle boundaries easily
+    padded = np.pad(binary, 1, mode='constant', constant_values=0)
+    
+    iteration = 0
+    max_iterations = 100  # Safety limit
+    while iteration < max_iterations:
+        changed = False
+        
+        # Step 1
+        p2 = padded[:-2, 1:-1]
+        p3 = padded[:-2, 2:]
+        p4 = padded[1:-1, 2:]
+        p5 = padded[2:, 2:]
+        p6 = padded[2:, 1:-1]
+        p7 = padded[2:, :-2]
+        p8 = padded[1:-1, :-2]
+        p9 = padded[:-2, :-2]
+        p1 = padded[1:-1, 1:-1]
+        
+        b = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9
+        
+        a = ((p2 == 0) & (p3 == 1)).astype(np.uint8) + \
+            ((p3 == 0) & (p4 == 1)).astype(np.uint8) + \
+            ((p4 == 0) & (p5 == 1)).astype(np.uint8) + \
+            ((p5 == 0) & (p6 == 1)).astype(np.uint8) + \
+            ((p6 == 0) & (p7 == 1)).astype(np.uint8) + \
+            ((p7 == 0) & (p8 == 1)).astype(np.uint8) + \
+            ((p8 == 0) & (p9 == 1)).astype(np.uint8) + \
+            ((p9 == 0) & (p2 == 1)).astype(np.uint8)
+            
+        cond1 = (p1 == 1)
+        cond2 = (b >= 2) & (b <= 6)
+        cond3 = (a == 1)
+        cond4 = (p2 * p4 * p6 == 0)
+        cond5 = (p4 * p6 * p8 == 0)
+        
+        to_delete = cond1 & cond2 & cond3 & cond4 & cond5
+        if np.any(to_delete):
+            padded[1:-1, 1:-1][to_delete] = 0
+            changed = True
+            
+        # Step 2
+        p2 = padded[:-2, 1:-1]
+        p3 = padded[:-2, 2:]
+        p4 = padded[1:-1, 2:]
+        p5 = padded[2:, 2:]
+        p6 = padded[2:, 1:-1]
+        p7 = padded[2:, :-2]
+        p8 = padded[1:-1, :-2]
+        p9 = padded[:-2, :-2]
+        p1 = padded[1:-1, 1:-1]
+        
+        b = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9
+        
+        a = ((p2 == 0) & (p3 == 1)).astype(np.uint8) + \
+            ((p3 == 0) & (p4 == 1)).astype(np.uint8) + \
+            ((p4 == 0) & (p5 == 1)).astype(np.uint8) + \
+            ((p5 == 0) & (p6 == 1)).astype(np.uint8) + \
+            ((p6 == 0) & (p7 == 1)).astype(np.uint8) + \
+            ((p7 == 0) & (p8 == 1)).astype(np.uint8) + \
+            ((p8 == 0) & (p9 == 1)).astype(np.uint8) + \
+            ((p9 == 0) & (p2 == 1)).astype(np.uint8)
+            
+        cond1 = (p1 == 1)
+        cond2 = (b >= 2) & (b <= 6)
+        cond3 = (a == 1)
+        cond4 = (p2 * p4 * p8 == 0)
+        cond5 = (p2 * p6 * p8 == 0)
+        
+        to_delete_2 = cond1 & cond2 & cond3 & cond4 & cond5
+        if np.any(to_delete_2):
+            padded[1:-1, 1:-1][to_delete_2] = 0
+            changed = True
+            
+        if not changed:
+            break
+            
+        iteration += 1
+        
+    return padded[1:-1, 1:-1] * 255
+
 def process_single_image(image_bytes, params):
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -118,9 +229,27 @@ def process_single_image(image_bytes, params):
     })
     step_counter = 2
 
-    # --- 0. GLOBAL (Grayscale first) ---
+    # --- 0. GLOBAL (Grayscale first, then Binarize) ---
     glob = params.get('global', {})
-    if glob.get('grayscale', False):
+    if glob.get('binarize', False):
+        if len(current_img.shape) == 3:
+            current_img = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY)
+        
+        # Binarize using default or user threshold
+        thresh_val = int(params.get('titik', {}).get('threshold', 128))
+        _, thresh_img = cv2.threshold(current_img, thresh_val, 255, cv2.THRESH_BINARY)
+        current_img = cv2.cvtColor(thresh_img, cv2.COLOR_GRAY2BGR)
+        
+        snapshots.append({
+            'op_key': 'binarize',
+            'params': {'threshold': thresh_val},
+            'title': f'{step_counter}. Mode Biner ({thresh_val})',
+            'image': image_to_base64(current_img)
+        })
+        step_counter += 1
+        formulas.append(f"P_bin(x,y) = 255 if P_gray(x,y) > {thresh_val} else 0")
+        
+    elif glob.get('grayscale', False):
         if len(current_img.shape) == 3:
             current_img = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY)
             current_img = cv2.cvtColor(current_img, cv2.COLOR_GRAY2BGR)
@@ -321,6 +450,30 @@ def process_single_image(image_bytes, params):
                 'image': image_to_base64(current_img)
             })
             formulas.append("P'(x,y) = Prewitt kernel convolution")
+        elif edge_type == 'roberts':
+            kernelx = np.array([[1, 0], [0, -1]], dtype=np.float32)
+            kernely = np.array([[0, 1], [-1, 0]], dtype=np.float32)
+            x = cv2.filter2D(gray_for_edge, cv2.CV_32F, kernelx)
+            y = cv2.filter2D(gray_for_edge, cv2.CV_32F, kernely)
+            edge_img = cv2.magnitude(x, y)
+            current_img = cv2.convertScaleAbs(edge_img)
+            snapshots.append({
+                'op_key': 'edge_roberts',
+                'params': {},
+                'title': f'{step_counter}. Edge Roberts',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = sqrt(Gx^2 + Gy^2) where Gx, Gy are Roberts Cross gradients")
+        elif edge_type == 'laplacian':
+            laplacian = cv2.Laplacian(gray_for_edge, cv2.CV_32F, ksize=3)
+            current_img = cv2.convertScaleAbs(laplacian)
+            snapshots.append({
+                'op_key': 'edge_laplacian',
+                'params': {},
+                'title': f'{step_counter}. Edge Laplacian',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = Laplacian(P) [Second-order derivative]")
         elif edge_type == 'canny':
             low = int(spasial.get('cannyLow', 50))
             high = int(spasial.get('cannyHigh', 150))
@@ -336,7 +489,179 @@ def process_single_image(image_bytes, params):
         if len(current_img.shape) == 2:
             current_img = cv2.cvtColor(current_img, cv2.COLOR_GRAY2BGR)
         step_counter += 1
+
+    # --- 4. OPERASI MORFOLOGI ---
+    morf = params.get('morfologi', {})
+    morf_type = morf.get('type', 'none')
+    morf_size = int(morf.get('kernelSize', 3))
+    
+    if morf_type != 'none':
+        if morf_size % 2 == 0: morf_size += 1
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (morf_size, morf_size))
+        
+        if morf_type == 'dilate':
+            current_img = cv2.dilate(current_img, kernel)
+            snapshots.append({
+                'op_key': 'morph_dilate',
+                'params': {'kernel_size': morf_size},
+                'title': f'{step_counter}. Dilasi ({morf_size}x{morf_size})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"P'(x,y) = max(P(x+i, y+j)) for (i,j) in {morf_size}x{morf_size} neighborhood")
+        elif morf_type == 'erode':
+            current_img = cv2.erode(current_img, kernel)
+            snapshots.append({
+                'op_key': 'morph_erode',
+                'params': {'kernel_size': morf_size},
+                'title': f'{step_counter}. Erosi ({morf_size}x{morf_size})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"P'(x,y) = min(P(x+i, y+j)) for (i,j) in {morf_size}x{morf_size} neighborhood")
+        elif morf_type == 'open':
+            current_img = cv2.morphologyEx(current_img, cv2.MORPH_OPEN, kernel)
+            snapshots.append({
+                'op_key': 'morph_open',
+                'params': {'kernel_size': morf_size},
+                'title': f'{step_counter}. Opening ({morf_size}x{morf_size})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = Dilate(Erode(P)) [Opening]")
+        elif morf_type == 'close':
+            current_img = cv2.morphologyEx(current_img, cv2.MORPH_CLOSE, kernel)
+            snapshots.append({
+                'op_key': 'morph_close',
+                'params': {'kernel_size': morf_size},
+                'title': f'{step_counter}. Closing ({morf_size}x{morf_size})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = Erode(Dilate(P)) [Closing]")
             
+        step_counter += 1
+
+    # --- 5. OPERASI THINNING / PENIPISAN ---
+    thin = params.get('thinning', {})
+    thin_type = thin.get('type', 'none')
+    
+    if thin_type != 'none':
+        gray = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY) if len(current_img.shape) == 3 else current_img
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        if thin_type == 'standard':
+            thinned = morphological_thinning(binary)
+            current_img = cv2.cvtColor(thinned, cv2.COLOR_GRAY2BGR)
+            snapshots.append({
+                'op_key': 'thinning_standard',
+                'params': {},
+                'title': f'{step_counter}. Morphological Thinning',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = P \ (P hit-or-miss rotations)")
+        elif thin_type == 'zhang_suen':
+            thinned = zhang_suen_thinning(binary)
+            current_img = cv2.cvtColor(thinned, cv2.COLOR_GRAY2BGR)
+            snapshots.append({
+                'op_key': 'thinning_zhang_suen',
+                'params': {},
+                'title': f'{step_counter}. Zhang-Suen Thinning',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append("P'(x,y) = Zhang-Suen Thinning [Iterative deletion of boundary pixels]")
+            
+        step_counter += 1
+
+    # --- 6. OPERASI SEGMENTASI ---
+    seg = params.get('segmentasi', {})
+    seg_type = seg.get('type', 'none')
+    
+    if seg_type != 'none':
+        if seg_type == 'threshold':
+            thresh_val = int(seg.get('threshVal', 128))
+            thresh_mode = seg.get('threshMode', 'binary')
+            
+            modes = {
+                'binary': cv2.THRESH_BINARY,
+                'binary_inv': cv2.THRESH_BINARY_INV,
+                'trunc': cv2.THRESH_TRUNC,
+                'tozero': cv2.THRESH_TOZERO,
+                'tozero_inv': cv2.THRESH_TOZERO_INV
+            }
+            mode = modes.get(thresh_mode, cv2.THRESH_BINARY)
+            
+            gray = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY) if len(current_img.shape) == 3 else current_img
+            _, thresh_img = cv2.threshold(gray, thresh_val, 255, mode)
+            current_img = cv2.cvtColor(thresh_img, cv2.COLOR_GRAY2BGR)
+            snapshots.append({
+                'op_key': 'segment_threshold',
+                'params': {'val': thresh_val, 'mode': thresh_mode},
+                'title': f'{step_counter}. Global Thresh ({thresh_mode}:{thresh_val})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"Global Thresholding (type={thresh_mode}, val={thresh_val})")
+            
+        elif seg_type == 'adaptive':
+            method_str = seg.get('method', 'mean')
+            block_size = int(seg.get('blockSize', 3))
+            const_c = int(seg.get('constC', 2))
+            
+            if block_size % 2 == 0: block_size += 1
+            if block_size <= 1: block_size = 3
+            
+            method = cv2.ADAPTIVE_THRESH_MEAN_C if method_str == 'mean' else cv2.ADAPTIVE_THRESH_GAUSSIAN_C
+            
+            gray = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY) if len(current_img.shape) == 3 else current_img
+            adaptive_img = cv2.adaptiveThreshold(gray, 255, method, cv2.THRESH_BINARY, block_size, const_c)
+            current_img = cv2.cvtColor(adaptive_img, cv2.COLOR_GRAY2BGR)
+            snapshots.append({
+                'op_key': 'segment_adaptive',
+                'params': {'method': method_str, 'block': block_size, 'c': const_c},
+                'title': f'{step_counter}. Adaptive Thresh ({method_str}, {block_size}x{block_size})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"Adaptive Threshold (method={method_str}, block={block_size}, C={const_c})")
+            
+        elif seg_type == 'otsu':
+            use_gaussian = seg.get('useGaussian', False)
+            g_size = int(seg.get('gaussianSize', 5))
+            if g_size % 2 == 0: g_size += 1
+            
+            gray = cv2.cvtColor(current_img, cv2.COLOR_BGR2GRAY) if len(current_img.shape) == 3 else current_img
+            if use_gaussian:
+                gray = cv2.GaussianBlur(gray, (g_size, g_size), 0)
+                
+            otsu_val, otsu_img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            current_img = cv2.cvtColor(otsu_img, cv2.COLOR_GRAY2BGR)
+            snapshots.append({
+                'op_key': 'segment_otsu',
+                'params': {'otsu_val': otsu_val, 'blur': use_gaussian},
+                'title': f'{step_counter}. Otsu Thresh (Optimal Val: {int(otsu_val)})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"Otsu Binarization (Otsu threshold value = {int(otsu_val)})")
+            
+        elif seg_type == 'kmeans':
+            k_clusters = int(seg.get('clusters', 3))
+            if k_clusters < 1: k_clusters = 1
+            
+            pixel_vals = current_img.reshape((-1, 3))
+            pixel_vals = np.float32(pixel_vals)
+            
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+            _, labels, centers = cv2.kmeans(pixel_vals, k_clusters, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            
+            centers = np.uint8(centers)
+            segmented_data = centers[labels.flatten()]
+            current_img = segmented_data.reshape((current_img.shape))
+            
+            snapshots.append({
+                'op_key': 'segment_kmeans',
+                'params': {'k': k_clusters},
+                'title': f'{step_counter}. K-Means Segmentation (K={k_clusters})',
+                'image': image_to_base64(current_img)
+            })
+            formulas.append(f"K-Means Clustering Segmentation (K={k_clusters} color clusters)")
+            
+        step_counter += 1
+
     matrix_after = extract_center_matrix(current_img)
     hist_after = get_grayscale_histogram_image(current_img)
     rgb_hist_after = get_rgb_histogram_image(current_img)

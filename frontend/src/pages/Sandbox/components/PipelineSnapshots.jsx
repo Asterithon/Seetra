@@ -25,12 +25,24 @@ export default function PipelineSnapshots({ snapshots }) {
         details = ` (${snap.params.contrast}x)`;
       } else if (snap.op_key === 'threshold' && snap.params.threshold !== undefined) {
         details = ` (${snap.params.threshold})`;
+      } else if (snap.op_key === 'binarize' && snap.params.threshold !== undefined) {
+        details = ` (${snap.params.threshold})`;
       } else if (snap.op_key === 'mean_filter' && snap.params.mean_size !== undefined) {
         details = ` (${snap.params.mean_size}x${snap.params.mean_size})`;
       } else if (snap.op_key === 'median_filter' && snap.params.median_size !== undefined) {
         details = ` (${snap.params.median_size}x${snap.params.median_size})`;
       } else if (snap.op_key === 'edge_canny' && snap.params.low !== undefined && snap.params.high !== undefined) {
         details = ` (${snap.params.low},${snap.params.high})`;
+      } else if (['morph_dilate', 'morph_erode', 'morph_open', 'morph_close'].includes(snap.op_key) && snap.params.kernel_size !== undefined) {
+        details = ` (${snap.params.kernel_size}x${snap.params.kernel_size})`;
+      } else if (snap.op_key === 'segment_threshold' && snap.params.val !== undefined && snap.params.mode !== undefined) {
+        details = ` (${snap.params.mode.toUpperCase()}:${snap.params.val})`;
+      } else if (snap.op_key === 'segment_adaptive' && snap.params.method !== undefined && snap.params.block !== undefined) {
+        details = ` (${snap.params.method.toUpperCase()}, ${snap.params.block}x${snap.params.block})`;
+      } else if (snap.op_key === 'segment_otsu' && snap.params.otsu_val !== undefined) {
+        details = ` (Optimal: ${Math.round(snap.params.otsu_val)})`;
+      } else if (snap.op_key === 'segment_kmeans' && snap.params.k !== undefined) {
+        details = ` (K=${snap.params.k})`;
       }
     }
     return `${idx + 1}. ${baseLabel}${details}`;

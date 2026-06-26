@@ -27,8 +27,27 @@ const DEFAULT_STATE = {
     cannyLow: 50,
     cannyHigh: 150,
   },
+  morfologi: {
+    type: 'none',
+    kernelSize: 3,
+  },
+  thinning: {
+    type: 'none',
+  },
+  segmentasi: {
+    type: 'none',
+    threshVal: 128,
+    threshMode: 'binary',
+    method: 'mean',
+    blockSize: 3,
+    constC: 2,
+    useGaussian: false,
+    gaussianSize: 5,
+    clusters: 3,
+  },
   global: {
     grayscale: false,
+    binarize: false,
   }
 };
 
@@ -36,6 +55,10 @@ export default function SingleImageProcess() {
   const { openLightbox } = useLightbox();
   const [params, setParams] = useState(DEFAULT_STATE);
   const { t } = useLanguage();
+  
+  // Track original user preferences for grayscale/binarize toggles
+  const [userGrayscalePref, setUserGrayscalePref] = useState(false);
+  const [userBinarizePref, setUserBinarizePref] = useState(false);
   
   const [inputFile, setInputFile] = useState(null);
   const [inputUrl, setInputUrl] = useState(null);
@@ -53,7 +76,11 @@ export default function SingleImageProcess() {
   
   const fileInputRef = useRef(null);
 
-  const handleResetAll = () => setParams(DEFAULT_STATE);
+  const handleResetAll = () => {
+    setParams(DEFAULT_STATE);
+    setUserGrayscalePref(false);
+    setUserBinarizePref(false);
+  };
   
   const updateParam = (category, key, value) => {
     setParams(prev => ({
@@ -64,7 +91,44 @@ export default function SingleImageProcess() {
 
   const updateGlobal = (key, value) => {
     setParams(prev => ({ ...prev, global: { ...prev.global, [key]: value } }));
+    if (key === 'grayscale') setUserGrayscalePref(value);
+    if (key === 'binarize') setUserBinarizePref(value);
   };
+
+  // Auto-Grayscale & Auto-Biner reactive logic
+  useEffect(() => {
+    const isEdgeActive = params.spasial.edgeType !== 'none';
+    const isThinningActive = params.thinning.type !== 'none';
+    const isSegmentationActive = params.segmentasi.type !== 'none' && params.segmentasi.type !== 'kmeans';
+
+    // Grayscale is required if edge detection, thinning, or non-KMeans segmentation is active, or if binarize is on.
+    const needsGrayscale = isEdgeActive || isThinningActive || isSegmentationActive || params.global.binarize;
+    
+    // Binarize is required if thinning is active.
+    const needsBinarize = isThinningActive;
+
+    const targetGrayscale = needsGrayscale ? true : userGrayscalePref;
+    const targetBinarize = needsBinarize ? true : userBinarizePref;
+
+    if (params.global.grayscale !== targetGrayscale || params.global.binarize !== targetBinarize) {
+      setParams(prev => ({
+        ...prev,
+        global: {
+          ...prev.global,
+          grayscale: targetGrayscale,
+          binarize: targetBinarize
+        }
+      }));
+    }
+  }, [
+    params.spasial.edgeType,
+    params.thinning.type,
+    params.segmentasi.type,
+    params.global.binarize,
+    userGrayscalePref,
+    userBinarizePref,
+    params.global.grayscale
+  ]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
